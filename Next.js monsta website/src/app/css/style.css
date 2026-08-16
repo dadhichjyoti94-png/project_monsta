@@ -1,0 +1,45 @@
+@import "tailwindcss";
+/* =========================
+   MONSTA STYLE DOTS
+========================= */
+
+.slick-slider {
+  position: relative;
+}
+
+.slick-dots {
+  position: absolute !important;
+  bottom: 25px !important;
+  left: 50% !important;
+  transform: translateX(-50%);
+  width: auto !important;
+}
+
+/* White Dots */
+
+.slick-dots li button {
+  padding: 0 !important;
+  width: 8px;
+  height: 8px;
+}
+
+.slick-dots li button:before {
+  content: "" !important;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  opacity: 1 !important;
+}
+
+/* Active Dot */
+
+.slick-dots li.slick-active button:before {
+  background: #c8966d;
+}
+
+/* Dot Gap */
+
+.slick-dots li {
+  margin: 0 5px;
+}
