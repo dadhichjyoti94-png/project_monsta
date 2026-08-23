@@ -19,6 +19,85 @@ var instance = new Razorpay({
   key_secret: razorpayKeySecret,
 });
 
+const escapeHtml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/\"/g, '&quot;')
+  .replace(/'/g, '&#039;')
+
+const sendOrderConfirmationEmail = async (order) => {
+  const recipient = order?.billing_address?.email
+
+  if (!recipient) {
+    throw new Error('Billing email is missing for this order')
+  }
+
+  const sender = process.env.MAIL_FROM || process.env.gmail_email
+  if (!sender || !process.env.gmail_app_password) {
+    throw new Error('Email service is not configured')
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: process.env.MAIL_SERVICE || 'gmail',
+    auth: {
+      user: process.env.gmail_email,
+      pass: process.env.gmail_app_password,
+    },
+  })
+
+  const productRows = (order.product_info || []).map((product) => {
+    const quantity = Number(product.quantity || 1)
+    const price = Number(product.newPrice ?? product.price ?? 0)
+    const name = escapeHtml(product.title || product.name || 'Product')
+
+    return `<tr><td style="padding:8px;border:1px solid #ddd">${name}</td><td style="padding:8px;border:1px solid #ddd;text-align:center">${quantity}</td><td style="padding:8px;border:1px solid #ddd;text-align:right">Rs. ${(price * quantity).toLocaleString('en-IN')}</td></tr>`
+  }).join('')
+
+  return transporter.sendMail({
+    from: sender,
+    to: recipient,
+    subject: `Order confirmed - ${order.order_number}`,
+    html: `
+      <h2>Thank you for your order!</h2>
+      <p>Your payment has been received and your order <strong>${escapeHtml(order.order_number)}</strong> is confirmed.</p>
+      <table style="border-collapse:collapse;width:100%;max-width:600px">
+        <thead><tr><th style="padding:8px;border:1px solid #ddd;text-align:left">Product</th><th style="padding:8px;border:1px solid #ddd">Qty</th><th style="padding:8px;border:1px solid #ddd;text-align:right">Total</th></tr></thead>
+        <tbody>${productRows}</tbody>
+        <tfoot><tr><td colspan="2" style="padding:8px;border:1px solid #ddd;text-align:right"><strong>Order total</strong></td><td style="padding:8px;border:1px solid #ddd;text-align:right"><strong>Rs. ${Number(order.net_amount || 0).toLocaleString('en-IN')}</strong></td></tr></tfoot>
+      </table>
+    `,
+  })
+}
+
+const queueOrderConfirmationEmail = async (orderId) => {
+  const order = await orderModel.findOneAndUpdate(
+    {
+      order_id: orderId,
+      email_delivery_status: { $in: ['pending', 'failed', null] },
+    },
+    { $set: { email_delivery_status: 'sending' } },
+    { new: true }
+  )
+
+  // The email was already sent or another request is currently sending it.
+  if (!order) return
+
+  try {
+    await sendOrderConfirmationEmail(order)
+    await orderModel.updateOne(
+      { _id: order._id },
+      { $set: { email_delivery_status: 'sent', order_confirmation_email_sent_at: new Date() } }
+    )
+  } catch (error) {
+    await orderModel.updateOne(
+      { _id: order._id },
+      { $set: { email_delivery_status: 'failed' } }
+    )
+    console.error(`Order confirmation email failed for ${orderId}:`, error.message)
+  }
+}
+
 
 exports.placeOrder = async (request, response) => {
   try {
@@ -254,6 +333,8 @@ exports.orderStatus = async (request, response) => {
         });
 
         if (paymentStatus == 2) {
+            await queueOrderConfirmationEmail(request.body.order_id)
+
             return response.send({
                 _status: true,
                 _message: 'Order Placed successfully',

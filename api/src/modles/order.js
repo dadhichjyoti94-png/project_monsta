@@ -39,6 +39,17 @@ const schema = new mongoose.Schema({
         default:""
     },
 
+    email_delivery_status:{
+        type:String,
+        enum:['pending', 'sending', 'sent', 'failed'],
+        default:'pending'
+    },
+
+    order_confirmation_email_sent_at:{
+        type:Date,
+        default:null
+    },
+
 
     order_note:{
         type:String,

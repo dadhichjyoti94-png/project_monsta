@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { FaGreaterThan } from "react-icons/fa6";
 import Cookies from 'js-cookie'
+import UserLogoutButton from '../componets/common/UserLogoutButton'
 
 export default function MyProfile() {
     const [userProfile, setUserProfile] = useState('')
@@ -103,9 +104,7 @@ export default function MyProfile() {
                             </div>
                         </Link>
 
-                        <div className="bg-[#222] text-white font-semibold px-4 py-3 rounded hover:bg-[#c89b7d] cursor-pointer">
-                            Logout
-                        </div>
+                        <UserLogoutButton className="w-full bg-[#222] text-left text-white font-semibold px-4 py-3 rounded hover:bg-[#c89b7d] cursor-pointer" />
                     </div>
 
                     <div className="flex-1">

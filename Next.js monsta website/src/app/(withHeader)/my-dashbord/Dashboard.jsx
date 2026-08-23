@@ -3,19 +3,8 @@
 import Link from 'next/link';
 import React from 'react'
 import { FaGreaterThan } from "react-icons/fa6";
-import { useRouter } from 'next/navigation';
-import { useDispatch } from 'react-redux';
-import { logout } from '@/app/ReduxToolkit/LoginSlice';
-import { toast } from 'react-toastify';
+import UserLogoutButton from '../componets/common/UserLogoutButton';
 export default function Dashboard() {
-    const dispatch = useDispatch();
-    const router = useRouter();
-
-    const logoutHandler = () => {
-        dispatch(logout());
-        toast.success('Logout successfully');
-        router.push('/');
-    }
     return (
         <>
             <div>
@@ -68,13 +57,7 @@ export default function Dashboard() {
                             </div>
                         </Link>
 
-                        <button
-                            type="button"
-                            onClick={logoutHandler}
-                            className="w-full bg-[#222] text-white font-semibold px-4 py-3 rounded hover:bg-[#c89b7d] cursor-pointer"
-                        >
-                            Logout
-                        </button>
+                        <UserLogoutButton className="w-full bg-[#222] text-white font-semibold px-4 py-3 rounded hover:bg-[#c89b7d] cursor-pointer" />
 
                     </div>
 

@@ -1,255 +1,66 @@
-import React from 'react'
+"use client";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Cookies from "js-cookie";
+import Link from "next/link";
 import { FaGreaterThan } from "react-icons/fa6";
-import Link from 'next/link';
+import { toast } from "react-toastify";
+import { getUserAuthHeaders, getWebsiteApiBaseUrl } from "../utils/api";
+import UserLogoutButton from "../componets/common/UserLogoutButton";
+
+const emptyAddress = { name: "", email: "", mobile_number: "", address: "", country: "", state: "", city: "" };
+const fields = [["name", "Name", "text"], ["email", "Email", "email"], ["mobile_number", "Mobile Number", "tel"], ["address", "Address", "text"], ["country", "Country", "text"], ["state", "State", "text"], ["city", "City", "text"]];
+
+function AddressForm({ title, address, onChange, onSubmit, isSaving }) {
+  return <form onSubmit={onSubmit} className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm"><h2 className="mb-5 text-xl font-bold text-stone-900">{title}</h2><div className="space-y-4">{fields.map(([key, label, type]) => <label key={key} className="block"><span className="mb-1.5 block text-sm font-medium text-stone-700">{label}<span className="text-[#c09578]">*</span></span><input type={type} name={key} required value={address[key] || ""} onChange={onChange} className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm outline-none transition focus:border-[#c09578] focus:ring-2 focus:ring-[#c09578]/20" /></label>)}</div><div className="mt-6 text-right"><button type="submit" disabled={isSaving} className="rounded-lg bg-[#242424] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#c09578] disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Saving..." : "Update address"}</button></div></form>;
+}
 
 export default function Address() {
-    return (
-        <>
-            <div>
-                <div className='text-center mt-10 border-b border-gray-300 w-[84%] mx-auto pb-8'>
-                    <p className='text-4xl font-medium text-[#242424]'>
-                        My Dashboard
-                    </p>
+  const [billingAddress, setBillingAddress] = useState(emptyAddress);
+  const [shippingAddress, setShippingAddress] = useState(emptyAddress);
+  const [isSaving, setIsSaving] = useState(false);
 
-                    <div className='flex justify-center items-center gap-2 pt-3'>
-                        <p className='hover:text-[#c09578]'>
-                            Home
-                        </p>
+  useEffect(() => {
+    const token = Cookies.get("user_login");
+    if (!token) return;
 
-                        <FaGreaterThan size={10} className='mt-1' />
+    axios.post(`${getWebsiteApiBaseUrl()}/user/view-profile`, {}, { headers: getUserAuthHeaders(token) })
+      .then(({ data }) => {
+        if (!data?._status) return;
+        const profile = data._data || {};
+        const legacyAddress = profile.Address || "";
+        setBillingAddress({ ...emptyAddress, name: profile.name || "", email: profile.email || "", mobile_number: profile.mobile_number || "", address: legacyAddress, ...(profile.billing_address || {}) });
+        setShippingAddress({ ...emptyAddress, name: profile.name || "", email: profile.email || "", mobile_number: profile.mobile_number || "", address: legacyAddress, ...(profile.shipping_address || {}) });
+      })
+      .catch(() => toast.error("Address details load nahi ho sake."));
+  }, []);
 
-                        <p className='text-[#c09578]'>
-                            My Dashboard
-                        </p>
-                    </div>
-                </div>
+  const updateAddress = async (type, event) => {
+    event.preventDefault();
+    const token = Cookies.get("user_login");
+    if (!token) return toast.error("Please login again.");
 
-                <div className="flex flex-col gap-6 py-8 w-[84%] mx-auto md:flex-row">
+    const nextBillingAddress = type === "billing" ? billingAddress : billingAddress;
+    const nextShippingAddress = type === "shipping" ? shippingAddress : shippingAddress;
+    setIsSaving(true);
+    try {
+      const { data } = await axios.put(`${getWebsiteApiBaseUrl()}/user/update-profile`, {
+        billing_address: nextBillingAddress,
+        shipping_address: nextShippingAddress,
+        Address: nextBillingAddress.address,
+      }, { headers: getUserAuthHeaders(token) });
+      if (!data?._status) throw new Error(data?._message || "Address update nahi ho saka.");
+      setBillingAddress({ ...emptyAddress, ...(data._data?.billing_address || nextBillingAddress) });
+      setShippingAddress({ ...emptyAddress, ...(data._data?.shipping_address || nextShippingAddress) });
+      toast.success("Address updated successfully.");
+    } catch (error) {
+      toast.error(error.response?.data?._message || error.message || "Address update nahi ho saka.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-                    <div className="w-full md:w-[260px] shrink-0">
-                        <div className="bg-[#222] text-white font-semibold px-4 py-3 rounded mb-2 hover:bg-[#c89b7d] cursor-pointer">
-                            My Dashboard
-                        </div>
-
-                        <Link href={'/order'}>
-                            <div className="bg-[#222] text-white font-semibold px-4 py-3 rounded mb-2 hover:bg-[#c89b7d] cursor-pointer">
-                                Orders
-                            </div>
-                        </Link>
-
-                        <Link href={'/address'}>
-                            <div className="bg-[#222] text-white font-semibold px-4 py-3 rounded mb-2 hover:bg-[#c89b7d] cursor-pointer">
-                                Addresses
-                            </div>
-                        </Link>
-
-
-                        <Link href={'/my-profile'}>
-                            <div className="bg-[#222] text-white font-semibold px-4 py-3 rounded mb-2 hover:bg-[#c89b7d] cursor-pointer">
-                                My Profile
-                            </div>
-                        </Link>
-
-                        <Link href={'/change-password'}>
-                            <div className="bg-[#222] text-white font-semibold px-4 py-3 rounded mb-2 hover:bg-[#c89b7d] cursor-pointer">
-                                Change Password
-                            </div>
-                        </Link>
-
-                        <Link href={'/'}>
-                            <div className="bg-[#222] text-white font-semibold px-4 py-3 rounded hover:bg-[#c89b7d] cursor-pointer">
-                                Logout
-                            </div>
-                        </Link>
-
-                    </div>
-
-                    <div className="flex-1">
-                        <h3 className="text-[16px] mb-8 text-[#5a5a5a]">
-                            The following addresses will be used on the checkout page by default.
-                        </h3>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                            {/* Billing Address */}
-                            <div>
-                                <h2 className="text-[22px] mb-4">Billing Address</h2>
-
-                                <div className="border border-gray-300 p-5">
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Billing Name*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Billing Email*
-                                        </label>
-                                        <input
-                                            type="email"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Billing Mobile Number*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Billing Address*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Country*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            State*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            City*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="text-end">
-                                        <button
-                                            className="bg-[#c89b7d] hover:bg-black text-white
-                                                        px-6 py-2 text-[14px] font-semibold
-                                                        rounded-full transition-all duration-300"
-                                        >
-                                            UPDATE
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Shipping Address */}
-                            <div>
-                                <h2 className="text-[22px] mb-4">Shipping Address</h2>
-
-                                <div className="border border-gray-300 p-5">
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Shipping Name*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Shipping Email*
-                                        </label>
-                                        <input
-                                            type="email"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Shipping Mobile Number*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Shipping Address*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            Country*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            State*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="mb-5">
-                                        <label className="block mb-2 font-medium">
-                                            City*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-300 px-2 py-2 outline-none rounded"
-                                        />
-                                    </div>
-
-                                    <div className="text-end">
-                                        <button
-                                            className="bg-[#c89b7d] hover:bg-black text-white
-                                                        px-6 py-2 text-[14px] font-semibold
-                                                        rounded-full transition-all duration-300"
-                                        >
-                                            UPDATE
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className=' border-b border-gray-300 pt-5'></div>
-            </div>
-        </>
-    )
+  const sidebarItems = [["/order", "Orders"], ["/address", "Addresses"], ["/my-profile", "My Profile"], ["/change-password", "Change Password"]];
+  return <div><div className="mx-auto mt-10 w-[84%] border-b border-gray-300 pb-8 text-center"><p className="text-4xl font-medium text-[#242424]">My Dashboard</p><div className="flex items-center justify-center gap-2 pt-3 text-sm"><Link href="/" className="hover:text-[#c09578]">Home</Link><FaGreaterThan size={10} /><p className="text-[#c09578]">Addresses</p></div></div><div className="mx-auto flex w-[84%] flex-col gap-6 py-8 md:flex-row"><aside className="w-full shrink-0 md:w-[260px]"><div className="mb-2 rounded bg-[#222] px-4 py-3 font-semibold text-white">My Dashboard</div>{sidebarItems.map(([href, label]) => <Link href={href} key={href} className={`mb-2 block rounded px-4 py-3 font-semibold text-white transition ${href === "/address" ? "bg-[#c89b7d]" : "bg-[#222] hover:bg-[#c89b7d]"}`}>{label}</Link>)}<UserLogoutButton className="w-full rounded bg-[#222] px-4 py-3 text-left font-semibold text-white hover:bg-[#c89b7d]" /></aside><main className="flex-1"><p className="mb-6 text-sm text-stone-600">These saved addresses will be available during checkout.</p><div className="grid grid-cols-1 gap-6 xl:grid-cols-2"><AddressForm title="Billing address" address={billingAddress} isSaving={isSaving} onChange={(event) => setBillingAddress((current) => ({ ...current, [event.target.name]: event.target.value }))} onSubmit={(event) => updateAddress("billing", event)} /><AddressForm title="Shipping address" address={shippingAddress} isSaving={isSaving} onChange={(event) => setShippingAddress((current) => ({ ...current, [event.target.name]: event.target.value }))} onSubmit={(event) => updateAddress("shipping", event)} /></div></main></div><div className="border-b border-gray-300 pt-5" /></div>;
 }

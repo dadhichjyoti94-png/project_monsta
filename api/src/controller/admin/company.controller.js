@@ -19,6 +19,28 @@ const getCompany = async (request, response) => {
     }
 };
 
+const getPublicCompany = async (request, response) => {
+    try {
+        const company = await companyModel
+            .findOne()
+            .sort({ updated_at: -1 })
+            .select('company_name email mobile_number address city state country pincode website');
+
+        return response.send({
+            _status: true,
+            _message: company ? 'Company information fetched successfully.' : 'Company information not found.',
+            _data: company
+        });
+    } catch (error) {
+        return response.status(500).send({
+            _status: false,
+            _message: 'Something went wrong.',
+            _data: null,
+            _error: error.message
+        });
+    }
+};
+
 const updateCompany = async (request, response) => {
     try {
         const body = request.body || {};
@@ -75,4 +97,4 @@ const updateCompany = async (request, response) => {
     }
 };
 
-module.exports = { getCompany, updateCompany };
+module.exports = { getCompany, getPublicCompany, updateCompany };

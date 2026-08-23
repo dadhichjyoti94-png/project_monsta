@@ -137,7 +137,7 @@ console.log("SUB CATEGORY BODY =", request.body);
 if (orCondition.length > 0) {
     filter.$or = orCondition;
 }
-    console.log(filter)
+    // console.log(filter)
 
 
     //  categoryModel.find(filter)
@@ -319,7 +319,7 @@ exports.view = async (request, response) => {
     if (orCondition.length > 0) {
         filter.$or = orCondition;
     }
-    console.log(filter)
+    // console.log(filter)
 
 
 

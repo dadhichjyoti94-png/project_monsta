@@ -1,8 +1,21 @@
 import React from 'react'
-import SlideBar from '../category/[...slug]/SlideBar'
-import ProductCart from '../componets/common/ProductCart'
+import ProductListingClient from './ProductListingClient'
 import { createNameMap, getProductColor, getProductMaterial } from '../utils/product'
 import { getAdminApiUrl } from '../utils/api'
+
+const readJson = async (response) => {
+  const text = await response.text()
+
+  if (!text.trim()) {
+    return null
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
 
 const mapProduct = (product, imagePath = '', colorMap = {}, materialMap = {}) => {
   const imageName = product.image || ''
@@ -13,6 +26,7 @@ const mapProduct = (product, imagePath = '', colorMap = {}, materialMap = {}) =>
   return {
     id: product._id || product.id || product.slug,
     title: product.name || product.title || 'Product',
+    categoryGroup: product.parent_category_id?.name || product.categoryGroup || '',
     category: product.sub_sub_category_id?.name || product.sub_category_id?.name || product.parent_category_id?.name || '',
     oldPrice: product.actual_price || product.mrp || product.oldPrice || '0',
     newPrice: product.sale_price || product.price || product.newPrice || '0',
@@ -39,7 +53,7 @@ const getColorMap = async () => {
         cache: 'no-store',
       })
 
-      const data = await response.json()
+      const data = await readJson(response)
 
       if (data?._status && Array.isArray(data?._data)) {
         return createNameMap(data._data)
@@ -66,7 +80,7 @@ const getMaterialMap = async () => {
       cache: 'no-store',
     })
 
-    const data = await response.json()
+    const data = await readJson(response)
 
     if (data?._status && Array.isArray(data?._data)) {
       return createNameMap(data._data)
@@ -96,7 +110,7 @@ const getProducts = async () => {
       getMaterialMap(),
     ])
 
-    const data = await response.json()
+    const data = await readJson(response)
 
     if (!data?._status || !Array.isArray(data?._data)) {
       return []
@@ -112,12 +126,10 @@ const getProducts = async () => {
 export default async function OnlineStore({
   listingTitle = 'Online Store',
   products,
+  filterProducts,
 } = {}) {
   const storeProducts = Array.isArray(products) ? products : await getProducts()
-  const resultText = storeProducts.length === 1
-    ? 'Showing 1 result'
-    : `Showing ${storeProducts.length} results`
-
+  const sidebarProducts = Array.isArray(filterProducts) ? filterProducts : storeProducts
   return (
     <>
       <section>
@@ -126,34 +138,7 @@ export default async function OnlineStore({
           <p className='text-center mt-3 text-sm text-gray-600'>Home <span className='mx-2 text-[#c89a74]'>&gt;</span> {listingTitle}</p>
         </div>
 
-        <div className='w-[83%] mx-auto flex flex-col gap-8 pt-10 lg:flex-row lg:gap-10'>
-          <aside className='w-full lg:w-[270px] shrink-0'>
-            <SlideBar />
-          </aside>
-
-          <div className='flex-1 min-w-0'>
-            <div className='border border-gray-200 px-4 py-3 mb-7 flex flex-col items-start gap-3 sm:flex-row sm:justify-end sm:items-center sm:gap-7'>
-              <div className='flex flex-wrap items-center gap-3'>
-                <label htmlFor='product-sort' className='text-sm text-gray-700'>Sort By :</label>
-                <select id='product-sort' className='border border-gray-200 px-4 py-2 text-sm outline-none'>
-                  <option>Sort By</option>
-                  <option>Latest</option>
-                  <option>Price Low to High</option>
-                  <option>Price High to Low</option>
-                </select>
-              </div>
-              <p className='text-sm text-gray-700'>{resultText}</p>
-            </div>
-
-            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7'>
-              {storeProducts.length > 0 ? (
-                storeProducts.map((product) => <ProductCart key={product.id || product.title} {...product} />)
-              ) : (
-                <p className='col-span-full text-center text-gray-500 py-10'>No products found</p>
-              )}
-            </div>
-          </div>
-        </div>
+        <ProductListingClient products={storeProducts} filterProducts={sidebarProducts} />
       </section>
 
       <div className='w-full border-b border-gray-300 mt-8' />

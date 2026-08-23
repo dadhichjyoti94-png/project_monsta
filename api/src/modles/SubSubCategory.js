@@ -14,7 +14,7 @@ const schema = new mongoose.Schema({
     name: {
     type: String,
     required: [true, 'Name is required'],
-    match: [/^[a-zA-Z ]{2,50}$/, 'Name must contain only letters and spaces'],
+     match: [/^[a-zA-Z0-9 ]{2,50}$/, 'Name must contain only letters, numbers and spaces']
 },
     slug: {
         type: String,

@@ -175,7 +175,7 @@ exports.view = async (request, response) => {
     if(orCondition.length >0){
         filter.$or = orCondition;
     }
-    console.log(filter)
+    // console.log(filter)
 
 
 

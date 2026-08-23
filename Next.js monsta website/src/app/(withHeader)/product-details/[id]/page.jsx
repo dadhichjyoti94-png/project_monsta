@@ -109,20 +109,34 @@ const formatValue = (key, value) => {
 }
 
 const getImageUrl = (imagePath, image) => {
-    if (!image) {
+    const imageValue = typeof image === 'string'
+        ? image
+        : image?.url || image?.path || image?.src || image?.filename || ''
+
+    if (!imageValue) {
         return ''
     }
 
     if (
-        image.startsWith('http://') ||
-        image.startsWith('https://') ||
-        image.startsWith('data:') ||
-        image.startsWith('/')
+        imageValue.startsWith('http://') ||
+        imageValue.startsWith('https://') ||
+        imageValue.startsWith('data:') ||
+        imageValue.startsWith('/')
     ) {
-        return image
+        return imageValue
     }
 
-    return `${imagePath}/${image}`
+    return `${imagePath}/${imageValue}`
+}
+
+const getProductImages = (product = {}) => {
+    const galleryImages = Array.isArray(product.images)
+        ? product.images
+        : product.images
+            ? [product.images]
+            : []
+
+    return [product.image, ...galleryImages].filter((image) => Boolean(getImageUrl('', image)))
 }
 
 const getCleanCode = (value) => {
@@ -152,15 +166,15 @@ function ProductRail({ title, products }) {
     }
 
     return (
-        <section className="mt-12">
-            <div className="mb-7 flex items-center gap-5">
-                <h2 className="shrink-0 font-serif text-[30px] font-bold text-[#111]">
+        <section className="mt-14">
+            <div className="mb-6 flex items-center gap-4">
+                <h2 className="shrink-0 font-serif text-2xl font-semibold text-[#242424] sm:text-[26px]">
                     {title}
                 </h2>
                 <div className="h-px flex-1 bg-gray-200" />
             </div>
 
-            <div className="grid grid-cols-1 gap-6 pb-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+            <div className="grid grid-cols-1 gap-5 pb-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
                 {products.map((item) => (
                     <div key={item.id || item.title}>
                         <ProductCart {...item} />
@@ -321,8 +335,8 @@ export default function ProductDetails({ params }) {
                         upsellItems.map((item) => mapProductCard(item, listImagePath, nextColorMap, nextMaterialMap))
                     )
 
-                    // Main image ko initially selected rakho
-                    setSelectedImage(data.image || data.images?.[0] || '')
+                    // Keep the first available product image selected by default.
+                    setSelectedImage(getProductImages(data)[0] || '')
 
                     if (colorId && !getProductColor(data, nextColorMap)) {
                         fetchColorDetails(colorId)
@@ -355,14 +369,10 @@ export default function ProductDetails({ params }) {
     }, [id])
 
     if (!product) {
-        return <div className="p-10">Loading...</div>
+        return <div className="mx-auto max-w-[1280px] px-5 py-16 text-center text-base text-gray-600">Loading product...</div>
     }
 
-    //  YE YAHAN LAGANA HAI
-    const allImages = [
-        product.image,
-        ...(product.images || [])
-    ].filter(Boolean)
+    const allImages = getProductImages(product)
 
     const categoryName =
         getName(product.sub_sub_category_id) ||
@@ -455,22 +465,26 @@ export default function ProductDetails({ params }) {
     }
 
     return (
-        <div className="max-w-[1680px] mx-auto py-10 px-5 md:px-10">
-            <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-10">
+        <div className="mx-auto max-w-[1320px] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+            <div className="mb-7 text-sm text-gray-500">
+                Home <span className="mx-2 text-gray-300">/</span> {categoryName || 'Products'} <span className="mx-2 text-gray-300">/</span> <span className="text-[#c09473]">{product.name}</span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] lg:gap-12">
 
                 {/* LEFT SIDE IMAGES */}
-                <div>
+                <div className="min-w-0">
 
                     {/* MAIN IMAGE */}
-                    <div className="border border-gray-200 flex justify-center bg-white">
+                    <div className="flex aspect-square items-center justify-center overflow-hidden rounded-sm border border-gray-200 bg-[#fafafa]">
                         {selectedImage ? (
                             <img
                                 src={getImageUrl(imagePath, selectedImage)}
                                 alt={product.name}
-                                className="w-full h-[360px] md:h-[520px] object-cover"
+                                className="h-full w-full object-contain"
                             />
                         ) : (
-                            <div className="w-full h-[360px] md:h-[520px] flex items-center justify-center text-gray-500">
+                            <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
                                 No image available
                             </div>
                         )}
@@ -478,19 +492,20 @@ export default function ProductDetails({ params }) {
 
                     {/* SMALL IMAGES */}
                     {allImages.length > 0 && (
-                        <div className="flex justify-center gap-5 mt-7 overflow-x-auto pb-2">
+                        <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
 
                             {allImages.map((img, index) => (
                                 <button
                                     key={`${img}-${index}`}
                                     type="button"
                                     onClick={() => setSelectedImage(img)}
-                                    className={`shrink-0 border p-1 bg-white ${selectedImage === img ? 'border-[#c98b6b]' : 'border-gray-200'}`}
+                                    aria-label={`View image ${index + 1}`}
+                                    className={`shrink-0 rounded-sm border bg-white p-1 transition ${selectedImage === img ? 'border-[#c98b6b] ring-1 ring-[#c98b6b]' : 'border-gray-200 hover:border-gray-400'}`}
                                 >
                                     <img
                                         src={getImageUrl(imagePath, img)}
                                         alt={`${product.name}-${index}`}
-                                        className="w-[135px] h-[90px] object-cover cursor-pointer"
+                                        className="h-16 w-20 cursor-pointer object-cover sm:h-20 sm:w-24"
                                     />
                                 </button>
                             ))}
@@ -501,36 +516,36 @@ export default function ProductDetails({ params }) {
                 </div>
 
                 {/* RIGHT SIDE DETAILS */}
-                <div className="pt-0 lg:pt-1">
-                    <h1 className="text-4xl font-serif font-bold text-[#111]">
+                <div className="lg:pt-2">
+                    <h1 className="font-serif text-3xl font-semibold leading-tight text-[#242424] sm:text-4xl">
                         {product.name}
                     </h1>
 
-                    <div className="mt-7 flex flex-wrap items-center gap-5">
-                        <span className="text-gray-400 line-through text-2xl">
+                    <div className="mt-5 flex flex-wrap items-baseline gap-3 border-b border-gray-200 pb-5">
+                        <span className="text-base text-gray-400 line-through">
                             Rs. {product?.actual_price}
                         </span>
 
-                        <span className="text-[#c09473] font-bold text-3xl">
+                        <span className="text-2xl font-semibold text-[#c09473]">
                             Rs. {product?.sale_price}
                         </span>
                     </div>
 
-                    <p className="text-gray-700 mt-12 text-xl leading-8">
+                    <p className="mt-5 text-base leading-7 text-gray-600">
                         {product.sort_description}
                     </p>
 
-                    <div className="border-t border-gray-200 mt-12 pt-12">
+                    <div className="mt-7 border-t border-gray-200 pt-7">
                         <button
                             type="button"
                             onClick={addToCart}
-                            className="w-full max-w-[405px] h-[62px] bg-[#c09473] text-white text-2xl font-semibold hover:bg-[#a97859] transition"
+                            className="h-12 w-full max-w-xs rounded-sm bg-[#c09473] px-6 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-[#a97859]"
                         >
                             Add To Cart
                         </button>
                     </div>
 
-                    <div className="mt-10 space-y-6 text-2xl text-black">
+                    <div className="mt-7 space-y-3 border-t border-gray-200 pt-6 text-sm leading-6 text-gray-700">
                         {product.product_code && (
                             <p>Code: {getCleanCode(product.product_code)}</p>
                         )}
@@ -566,12 +581,12 @@ export default function ProductDetails({ params }) {
             </div>
 
             {(product.long_description || product.description) && (
-                <div className="mt-14 border-t border-gray-200 pt-8">
-                    <h2 className="text-2xl font-serif font-bold mb-4">
+                <div className="mt-12 border-t border-gray-200 pt-8">
+                    <h2 className="mb-3 font-serif text-2xl font-semibold text-[#242424]">
                         Description
                     </h2>
 
-                    <p className="text-gray-700 text-lg leading-8 whitespace-pre-line">
+                    <p className="whitespace-pre-line text-base leading-7 text-gray-600">
                         {product.long_description || product.description}
                     </p>
                 </div>

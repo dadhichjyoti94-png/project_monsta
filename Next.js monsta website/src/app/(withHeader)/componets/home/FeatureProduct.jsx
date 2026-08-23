@@ -121,9 +121,9 @@ export default function FeatureProduct() {
 
                 {/* Tabs */}
 
-                <div className="mt-7 mb-8 flex justify-center">
+                <div className="mt-10 mb-9 flex justify-center">
 
-                    <div className="flex max-w-full border border-gray-300 text-sm sm:text-base">
+                    <div className="flex max-w-full overflow-hidden rounded-lg border border-[#e3d9d2] bg-[#faf8f5] text-sm shadow-sm sm:text-base">
 
                         <button
                             onClick={() => setActiveTab("featured")}
@@ -162,7 +162,7 @@ export default function FeatureProduct() {
 
                 {/* Products */}
 
-                <div className="w-[84%] max-w-[1120px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="w-[90%] max-w-[1180px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
                     {loading ? (
 

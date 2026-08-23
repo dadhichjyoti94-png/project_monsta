@@ -7,9 +7,19 @@ import { FaAddressCard } from "react-icons/fa";
 import { FaPhoneAlt } from "react-icons/fa";
 import { SlEnvolope } from "react-icons/sl";
 import { toast } from 'react-toastify';
+import { getWebsiteApiBaseUrl } from '../utils/api';
 
 export default function ContactUs() {
     const [loading, setLoading] = useState(false);
+    const [company, setCompany] = useState(null);
+
+    React.useEffect(() => {
+        axios.get(`${getWebsiteApiBaseUrl()}/company`)
+            .then(({ data }) => {
+                if (data?._status) setCompany(data._data);
+            })
+            .catch(() => {});
+    }, []);
 
     const submitHandler = (event) => {
         event.preventDefault();
@@ -78,17 +88,21 @@ export default function ContactUs() {
                             <div className='mt-6'>
                                 <p className='flex items-center gap-4 border-t border-b border-gray-300 py-5'>
                                     <FaAddressCard />
-                                    <span>Address : Claritas est etiam processus dynamicus</span>
+                                    <span>Address : {company?.address || 'Claritas est etiam processus dynamicus'}</span>
                                 </p>
 
                                 <p className='flex items-center gap-4 border-b border-gray-300 py-5'>
                                     <FaPhoneAlt />
-                                    <span>98745612330</span>
+                                    <a href={`tel:${company?.mobile_number || '98745612330'}`} className='hover:text-[#c09578]'>
+                                        {company?.mobile_number || '98745612330'}
+                                    </a>
                                 </p>
 
                                 <p className='flex items-center gap-4 py-5'>
                                     <SlEnvolope />
-                                    <span>furniture@gmail.com</span>
+                                    <a href={`mailto:${company?.email || 'furniture@gmail.com'}`} className='hover:text-[#c09578]'>
+                                        {company?.email || 'furniture@gmail.com'}
+                                    </a>
                                 </p>
                             </div>
                         </div>

@@ -52,6 +52,14 @@ const schema = new mongoose.Schema({
     default:''
     
 },
+billing_address: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+},
+shipping_address: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+},
 role_type: {
     type: String,
     required:[true,'roleType is required'],

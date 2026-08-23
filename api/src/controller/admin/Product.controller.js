@@ -332,7 +332,8 @@ exports.details = async (request, response) => {
 };
 
 exports.update = async (request, response) => {
-    const dataSave = request.body;
+    const dataSave = { ...request.body };
+    const getDetails = await ProductModel.findOne({ _id: request.params.id });
 
     if (request.files != undefined) {
         if (request.files.image != undefined) {
@@ -340,15 +341,15 @@ exports.update = async (request, response) => {
         }
 
         if (request.files.images != undefined) {
-            var images = [];
+            const images = [];
             request.files.images.forEach((v) => {
                 images.push(v.filename);
             });
-            dataSave.images = images;
+            // The admin sends only newly chosen files during an update. Keep
+            // gallery images already stored for this product as well.
+            dataSave.images = [...(getDetails?.images || []), ...images];
         }
     }
-
-    var getDetails = await ProductModel.findOne({ _id: request.params.id });
 
     if (getDetails && getDetails.slug != request.body.slug) {
         if (request.body.slug == undefined || request.body.slug == '') {

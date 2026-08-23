@@ -32,18 +32,20 @@ const hasAdminRole = (payload) => {
 export function proxy(request) {
   const cookies = request.cookies.get('user_login')?.value
   const isLogin = cookies ? 1 : 0
+  const pathname = request.nextUrl.pathname
   const adminToken = request.cookies.get('admin_token')?.value || request.cookies.get('admin_login')?.value
   const adminRole = request.cookies.get('admin_role')?.value
   const adminPayload = decodeJwtPayload(adminToken)
   const isAdminLogin = adminToken && (hasAdminRole(adminPayload?.adminData) || hasAdminRole(adminPayload) || adminRole === 'admin') ? 1 : 0
-  const isAdminLoginPage = request.nextUrl.pathname.startsWith('/admin/login')
-  const isAdminProtectedRoute = request.nextUrl.pathname.startsWith('/admin') && !isAdminLoginPage
+  const isAdminLoginPage = pathname.startsWith('/admin/login')
+  const isAdminProtectedRoute = pathname.startsWith('/admin') && !isAdminLoginPage
+  const isUserProtectedRoute = pathname.startsWith('/my-dashbord') || pathname.startsWith('/checkout')
 
-  if (isLogin === 1 && request.nextUrl.pathname.startsWith('/login-register')) {
+  if (isLogin === 1 && pathname.startsWith('/login-register')) {
     return NextResponse.redirect(new URL('/my-dashbord', request.url))
   }
 
-  if (isLogin === 0 && request.nextUrl.pathname.startsWith('/my-dashbord')) {
+  if (isLogin === 0 && isUserProtectedRoute) {
     return NextResponse.redirect(new URL('/login-register', request.url))
   }
 

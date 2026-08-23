@@ -70,6 +70,7 @@ require('./src/routes/website/user.routes')(server)
 require('./src/routes/website/order.routes')(server)
 require('./src/routes/website/contentEnquiry.routes')(server)
 require('./src/routes/website/newsletter.routes')(server)
+require('./src/routes/website/company.routes')(server)
 
 //Admin ROUTES
 

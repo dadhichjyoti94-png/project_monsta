@@ -242,10 +242,11 @@ export default function CustomerSays() {
     }
   }, [])
 
-  const activeTestimonial = testimonials[activeSlide] || testimonials[0] || fallbackTestimonials[0]
+  const activeTestimonial = testimonials?.[activeSlide] || testimonials?.[0] || fallbackTestimonials[0]
   const safeImage = activeTestimonial?.image || '/image/img10.jpg'
   const safeName = activeTestimonial?.name || 'KATHY YOUNG'
   const safeRole = activeTestimonial?.role || 'CEO of SunPark'
+  const safeText = activeTestimonial?.text || 'These guys have been absolutely outstanding.'
 
   const newsletterHandler = (event) => {
     event.preventDefault()
@@ -280,7 +281,7 @@ export default function CustomerSays() {
             {loadingTestimonials ? (
               <p className='max-w-[790px] mx-5 sm:mx-auto text-gray-500 leading-7'>Loading testimonials...</p>
             ) : (
-              <p className='max-w-[790px] mx-5 sm:mx-auto text-gray-700 leading-7'>{activeTestimonial.text}</p>
+              <p className='max-w-[790px] mx-5 sm:mx-auto text-gray-700 leading-7'>{safeText}</p>
             )}
           </div>
 
@@ -297,26 +298,32 @@ export default function CustomerSays() {
               />
             </div>
             <div>
-              <p className='py-4'>{safeName}</p>
-              <p className='text-gray-700'>{safeRole}</p>
+              <p className='py-4 text-[#242424] font-semibold'>{safeName}</p>
+              <p className='text-gray-600 text-[14px]'>{safeRole}</p>
               <div className='flex justify-center pt-4'>
-                <FaStar />
-                <FaStar />
-                <FaStar />
-                <FaStar />
-                <FaStar />
+                <FaStar className='text-[#c89a74]' />
+                <FaStar className='text-[#c89a74]' />
+                <FaStar className='text-[#c89a74]' />
+                <FaStar className='text-[#c89a74]' />
+                <FaStar className='text-[#c89a74]' />
               </div>
 
-              <div className='flex justify-center gap-3 pt-6'>
-                {testimonials.map((testimonial, index) => (
-                  <button
-                    key={testimonial.id || testimonial.image || index}
-                    type='button'
-                    onClick={() => setActiveSlide(index)}
-                    aria-label={`Show testimonial ${index + 1}`}
-                    className={`h-3 w-3 rounded-full border border-[#c89a74] transition-colors ${activeSlide === index ? 'bg-[#c89a74]' : 'bg-white'}`}
-                  />
-                ))}
+              <div className='flex justify-center gap-3 pt-6 pb-4'>
+                {testimonials && testimonials.length > 0 ? (
+                  testimonials.map((testimonial, index) => (
+                    <button
+                      key={testimonial.id || testimonial.image || index}
+                      type='button'
+                      onClick={() => setActiveSlide(index)}
+                      aria-label={`Show testimonial ${index + 1}`}
+                      className={`h-3 w-3 rounded-full border border-[#c89a74] transition-colors ${
+                        activeSlide === index ? 'bg-[#c89a74]' : 'bg-white'
+                      }`}
+                    />
+                  ))
+                ) : (
+                  <p className='text-gray-500'>No testimonials available</p>
+                )}
               </div>
             </div>
           </div>

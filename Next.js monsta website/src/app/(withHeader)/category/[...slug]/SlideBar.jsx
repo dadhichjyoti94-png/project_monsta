@@ -1,305 +1,52 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { getDisplayName } from '../../utils/product'
-import { getAdminApiUrl } from '../../utils/api'
+import { useEffect, useMemo, useState } from "react";
 
-const fallbackColors = [
-  'Burnt Amber',
-  'Golden Teak',
-  'Carbon Black',
-  'Faded Oak',
-  'Weathered French Grey',
-  'Faded Ochre',
-  'Weathered Walnut',
-  'Cobalt Blue',
-  'Mango Green',
-  'Black Finish',
-]
+const getUniqueValues = (products, key) => [...new Set(products.map((product) => String(product[key] || "").trim()).filter(Boolean))].sort();
+const formatPrice = (value) => `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
 
-const fallbackMaterials = [
-  'Rose Wood',
-  'Teak Wood',
-  'Satin Wood',
-  'Sal Wood',
-  'Marandi Wood',
-  'Mahogany Wood',
-  'Mulberry Wood',
-  'JackFruit',
-]
+function FilterSection({ title, values, selectedValues, onToggle }) {
+  const [isOpen, setIsOpen] = useState(true);
+  if (!values.length) return null;
 
-export default function SlideBar() {
-  const [colors, setColors] = useState(fallbackColors)
-  const [materials, setMaterials] = useState(fallbackMaterials)
+  return <section className="border-b border-stone-200 py-4 last:border-0"><button type="button" onClick={() => setIsOpen(!isOpen)} className="flex w-full items-center justify-between text-left text-sm font-bold uppercase tracking-wide text-stone-800">{title}<span className="text-xl font-normal text-[#c09578]">{isOpen ? "−" : "+"}</span></button>{isOpen && <ul className="mt-3 max-h-52 space-y-2 overflow-y-auto pr-1">{values.map((value) => <li key={value}><label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-600 transition hover:text-[#a96745]"><input type="checkbox" checked={selectedValues.includes(value)} onChange={() => onToggle(value)} className="h-4 w-4 rounded accent-[#c09578]" /><span>{value}</span></label></li>)}</ul>}</section>;
+}
 
-  useEffect(() => {
-    const fetchColors = async () => {
-      const endpoints = ['colour', 'color']
+function CategoryGroups({ groups, selectedValues, onToggle }) {
+  if (!groups.length) return null;
 
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(getAdminApiUrl(`${endpoint}/view`), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              status: true,
-              limit: 100,
-            }),
-          })
+  return <section className="border-b border-stone-200 py-4"><h3 className="text-sm font-bold uppercase tracking-wide text-stone-800">Categories</h3><div className="mt-4 space-y-6">{groups.map(({ name, values }) => <div key={name}><h4 className="font-serif text-xl font-bold text-stone-800">{name}</h4><ul className="mt-3 space-y-2.5">{values.map((value) => <li key={value}><label className="flex cursor-pointer items-center gap-2.5 text-sm text-stone-600 transition hover:text-[#a96745]"><input type="checkbox" checked={selectedValues.includes(value)} onChange={() => onToggle(value)} className="h-4 w-4 rounded accent-[#c09578]" /><span>{value}</span></label></li>)}</ul></div>)}</div></section>;
+}
 
-          const data = await response.json()
+export default function SlideBar({ products = [], filters, onFiltersChange, priceLimits = { min: 0, max: 0 } }) {
+  const categoryGroups = useMemo(() => {
+    const groups = new Map();
+    products.forEach((product) => {
+      const categoryName = String(product.category || "").trim();
+      const isWoodenMirror = /wooden\s*mirrors?/i.test(categoryName);
+      const groupName = isWoodenMirror ? "Wooden Mirror" : (String(product.categoryGroup || "Other").trim() || "Other");
+      if (!categoryName) return;
+      if (!groups.has(groupName)) groups.set(groupName, new Set());
+      groups.get(groupName).add(categoryName);
+    });
+    return [...groups.entries()].map(([name, values]) => ({ name, values: [...values].sort() })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+  const materials = useMemo(() => getUniqueValues(products, "material"), [products]);
+  const colors = useMemo(() => getUniqueValues(products, "color"), [products]);
+  const [minPrice, setMinPrice] = useState(priceLimits.min);
+  const [maxPrice, setMaxPrice] = useState(priceLimits.max);
+  const safeFilters = { categories: [], materials: [], colors: [], price: null, ...filters };
 
-          if (data?._status && Array.isArray(data?._data)) {
-            const adminColors = data._data
-              .map((item) => getDisplayName(item))
-              .filter(Boolean)
+  useEffect(() => { setMinPrice(priceLimits.min); setMaxPrice(priceLimits.max); }, [priceLimits.min, priceLimits.max]);
 
-            if (adminColors.length > 0) {
-              setColors(adminColors)
-              return
-            }
-          }
-        } catch (error) {
-          console.log(`${endpoint.toUpperCase()} LIST ERROR =`, error)
-        }
-      }
-    }
+  const toggleFilter = (key, value) => onFiltersChange({ ...safeFilters, [key]: safeFilters[key].includes(value) ? safeFilters[key].filter((item) => item !== value) : [...safeFilters[key], value] });
+  const applyPriceFilter = () => {
+    const min = Math.max(priceLimits.min, Number(minPrice) || 0);
+    const max = Math.min(priceLimits.max, Number(maxPrice) || priceLimits.max);
+    onFiltersChange({ ...safeFilters, price: { min: Math.min(min, max), max: Math.max(min, max) } });
+  };
+  const clearFilters = () => { setMinPrice(priceLimits.min); setMaxPrice(priceLimits.max); onFiltersChange({ categories: [], materials: [], colors: [], price: null }); };
+  const selectedCount = safeFilters.categories.length + safeFilters.materials.length + safeFilters.colors.length + (safeFilters.price ? 1 : 0);
 
-    fetchColors()
-  }, [])
-
-  useEffect(() => {
-    const fetchMaterials = async () => {
-      try {
-        const response = await fetch(getAdminApiUrl('material/view'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: true,
-            limit: 100,
-          }),
-        })
-
-        const data = await response.json()
-
-        if (data?._status && Array.isArray(data?._data)) {
-          const adminMaterials = data._data
-            .map((item) => getDisplayName(item))
-            .filter(Boolean)
-
-          if (adminMaterials.length > 0) {
-            setMaterials(adminMaterials)
-          }
-        }
-      } catch (error) {
-        console.log('MATERIAL LIST ERROR =', error)
-      }
-    }
-
-    fetchMaterials()
-  }, [])
-
-  return (
-    <>
-      <div className='w-full'>
-
-        <div className='h-[494px] overflow-y-auto scrollbar border-b border-[#d9d9d9] pb-4'>
-          <div>
-            <h2 className='text-2xl font-bold'>Categories</h2>
-
-            <h3 className='text-[#69645F] text-xl font-medium pt-5 pb-2'>Tables</h3>
-
-            <ul>
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Side and End Tables</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Nest Of Tables</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Coffee Table Sets</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Coffee Tables</p>
-              </li>
-            </ul>
-
-            <p className='text-xl font-medium pt-5 pb-2 text-[#69645F]'>
-              Mirror
-            </p>
-
-            <ul>
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Wooden Mirrors</p>
-              </li>
-            </ul>
-
-            <p className='text-xl font-medium pt-5 pb-2 text-[#69645F]'>
-              Living Storage/collections
-            </p>
-
-            <ul>
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Prayer Units</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Display Unit</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Shoe Racks</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Chest Of Drawers</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Cabinets and Sideboard</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Bookshelves</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>TV units</p>
-              </li>
-            </ul>
-
-            <p className='text-xl font-medium pt-5 pb-2 text-[#69645F]'>
-              Sofa Cum Bed
-            </p>
-
-            <ul>
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Wooden Sofa Cum Bed</p>
-              </li>
-            </ul>
-
-            <p className='text-xl font-medium pt-5 pb-2 text-[#69645F]'>
-              Sofa Sets
-            </p>
-
-            <ul>
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Sofa Cover</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>L Shape Sofa</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>1 Seater Sofa</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>2 Seater Sofa</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>3 Seater Sofa</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Wooden Sofa Set</p>
-              </li>
-
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Normal</p>
-              </li>
-            </ul>
-
-            <p className='text-xl font-medium pt-5 pb-2 text-[#69645F]'>
-              Swing
-            </p>
-
-            <ul>
-              <li className='flex gap-2 pb-3'>
-                <input type='checkbox' />
-                <p>Wooden Jhula</p>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className='mt-5 border-b border-gray-300 w-full'>
-          <p className='text-2xl font-semibold pb-5'>Material</p>
-
-          <ul>
-            {materials.map((material) => (
-              <li key={material} className='flex gap-2 pb-4'>
-                <input type='checkbox' />
-                <p>{material}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className='mt-5 pb-2 w-full'>
-          <p className='text-2xl font-semibold pb-5'>Color</p>
-
-          <ul>
-            {colors.map((color) => (
-              <li key={color} className='flex gap-2 pb-4'>
-                <input type='checkbox' />
-                <p>{color}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className='mt-2  pb-8 w-[270px]'>
-
-          <h2 className='text-2xl font-semibold mb-6'>Filter By Price</h2>
-    
-
-        <input
-          type='range'
-          min='0'
-          max='200000'
-          className='w-full accent-[#c09073]'
-        />
-
-        <p className='font-semibold text-gray-700 mt-5'>
-          Rs. 0 - Rs. 200000
-        </p>
-
-        <button className='mt-3 bg-[#1f1f1f] text-white px-5 py-2 text-sm font-semibold rounded hover:bg-[#C09578]'>
-          Filter
-        </button>
-      </div>
-
-    </div >
-    </>
-  )
+  return <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-[0_8px_30px_rgba(76,51,37,0.08)] lg:sticky lg:top-6"><div className="max-h-[calc(100vh-3rem)] overflow-y-auto p-5"><div className="flex items-center justify-between gap-3 border-b border-stone-200 pb-4"><div><h2 className="text-xl font-bold text-stone-900">Filter products</h2><p className="mt-1 text-xs text-stone-500">Find exactly what you need</p></div>{selectedCount > 0 && <button type="button" onClick={clearFilters} className="text-sm font-semibold text-[#b77d5a] hover:underline">Clear all</button>}</div><section className="border-b border-stone-200 py-5"><h3 className="text-sm font-bold uppercase tracking-wide text-stone-800">Filter by price</h3><div className="mt-4 flex items-center gap-2"><input aria-label="Minimum price" type="number" min={priceLimits.min} max={maxPrice} value={minPrice} onChange={(event) => setMinPrice(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none transition focus:border-[#c09578] focus:ring-2 focus:ring-[#c09578]/20" /><span className="text-stone-400">–</span><input aria-label="Maximum price" type="number" min={minPrice} max={priceLimits.max} value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none transition focus:border-[#c09578] focus:ring-2 focus:ring-[#c09578]/20" /></div><div className="mt-3 flex items-center justify-between text-xs font-medium text-stone-500"><span>{formatPrice(minPrice)}</span><span>{formatPrice(maxPrice)}</span></div><button type="button" onClick={applyPriceFilter} disabled={!priceLimits.max} className="mt-4 w-full rounded-lg bg-[#242424] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#c09578] disabled:cursor-not-allowed disabled:opacity-50">Apply price filter</button></section><CategoryGroups groups={categoryGroups} selectedValues={safeFilters.categories} onToggle={(value) => toggleFilter("categories", value)} /><FilterSection title="Material" values={materials} selectedValues={safeFilters.materials} onToggle={(value) => toggleFilter("materials", value)} /><FilterSection title="Color" values={colors} selectedValues={safeFilters.colors} onToggle={(value) => toggleFilter("colors", value)} /></div></div>;
 }

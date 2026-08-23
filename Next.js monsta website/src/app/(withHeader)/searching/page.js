@@ -1,16 +1,123 @@
 import ProductCart from '../componets/common/ProductCart'
-import { products } from '../Data/products'
+import { getAdminApiUrl } from '../utils/api'
+import { createNameMap, getProductColor, getProductMaterial } from '../utils/product'
+
+const mapProduct = (product, imagePath = '', colorMap = {}, materialMap = {}) => {
+  const imageName = product.image || ''
+  const image = imageName.startsWith('http')
+    ? imageName
+    : `${imagePath}/${imageName}`
+
+  return {
+    id: product._id || product.id || product.slug,
+    title: product.name || product.title || 'Product',
+    category: product.sub_sub_category_id?.name || product.sub_category_id?.name || product.parent_category_id?.name || '',
+    oldPrice: product.actual_price || product.mrp || product.oldPrice || '0',
+    newPrice: product.sale_price || product.price || product.newPrice || '0',
+    image,
+    color: getProductColor(product, colorMap),
+    material: getProductMaterial(product, materialMap),
+  }
+}
+
+const getColorMap = async () => {
+  const endpoints = ['colour', 'color']
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(getAdminApiUrl(`${endpoint}/view`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: true,
+          limit: 100,
+        }),
+        cache: 'no-store',
+      })
+
+      const data = await response.json()
+
+      if (data?._status && Array.isArray(data?._data)) {
+        return createNameMap(data._data)
+      }
+    } catch (error) {
+      console.log(`${endpoint.toUpperCase()} LIST ERROR =`, error)
+    }
+  }
+
+  return {}
+}
+
+const getMaterialMap = async () => {
+  try {
+    const response = await fetch(getAdminApiUrl('material/view'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        status: true,
+        limit: 100,
+      }),
+      cache: 'no-store',
+    })
+
+    const data = await response.json()
+
+    if (data?._status && Array.isArray(data?._data)) {
+      return createNameMap(data._data)
+    }
+  } catch (error) {
+    console.log('MATERIAL LIST ERROR =', error)
+  }
+
+  return {}
+}
+
+const getProducts = async () => {
+  try {
+    const [response, colorMap, materialMap] = await Promise.all([
+      fetch(getAdminApiUrl('product/view'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: true,
+          limit: 100,
+        }),
+        cache: 'no-store',
+      }),
+      getColorMap(),
+      getMaterialMap(),
+    ])
+
+    const data = await response.json()
+
+    if (!data?._status || !Array.isArray(data?._data)) {
+      return []
+    }
+
+    return data._data.map((product) => mapProduct(product, data._image_path || '', colorMap, materialMap))
+  } catch (error) {
+    console.log('PRODUCT SEARCH ERROR =', error)
+    return []
+  }
+}
 
 export default async function SearchPage({ searchParams }) {
   const params = await searchParams
   const query = typeof params?.q === 'string' ? params.q.trim() : ''
   const normalizedQuery = query.toLowerCase()
+  
+  const allProducts = await getProducts()
   const results = normalizedQuery
-    ? products.filter((product) => {
+    ? allProducts.filter((product) => {
         const searchableContent = [
           product.title,
           product.category,
-          ...(product.tags || []),
         ]
           .join(' ')
           .toLowerCase()

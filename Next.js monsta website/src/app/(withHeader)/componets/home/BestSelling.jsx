@@ -58,12 +58,12 @@ export default function BestSelling() {
         <>
             <div>
                 <div className='pt-9 '>
-                    <h3 className='text-[#242424] text-[25px] px-5 sm:px-8 lg:px-30 font-semibold'>
+                    <h3 className='section-heading text-[#242424] text-[26px] px-5 sm:px-8 lg:px-30 font-semibold'>
                         Bestselling Products
                     </h3>
                 </div>
 
-                <div className='w-[84%] max-w-[1120px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-6'>
+                <div className='w-[90%] max-w-[1180px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-6'>
                     {loading ? (
                         <p className="w-full text-center text-gray-500">
                             Loading products...

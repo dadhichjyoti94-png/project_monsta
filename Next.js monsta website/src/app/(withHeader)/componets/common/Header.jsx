@@ -6,11 +6,11 @@ import React, { useEffect, useState } from 'react'
 import { FaSearch } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa";
 import { FaCartShopping } from "react-icons/fa6";
-import { FaAngleDown } from "react-icons/fa6";
+import { FaAngleDown, FaBars } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { getAdminApiUrl } from '../../utils/api';
+import { getAdminApiUrl, getWebsiteApiBaseUrl } from '../../utils/api';
 
 export default function Header() {
   const router = useRouter()
@@ -21,6 +21,10 @@ export default function Header() {
   const [cartItems, setCartItems] = useState([])
   const [wishlistItems, setWishlistItems] = useState([]);
   const [searchValue, setSearchValue] = useState('')
+  const [company, setCompany] = useState(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileCategoryOpen, setMobileCategoryOpen] = useState(null)
+  const [mobilePagesOpen, setMobilePagesOpen] = useState(false)
 
   const islogin = useSelector((data) => {
     return data.login.value;
@@ -240,13 +244,30 @@ export default function Header() {
 
   }, []);
 
+  useEffect(() => {
+    axios.get(`${getWebsiteApiBaseUrl()}/company`)
+      .then(({ data }) => {
+        if (data?._status) setCompany(data._data);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       <header className='w-full bg-white'>
         <div className='w-full border border-gray-300 '>
           <div className='flex flex-col items-center gap-1 p-3 text-center sm:flex-row sm:justify-between sm:px-8 lg:px-30'>
             <p className='text-[14px]'>
-              Contact us 24/7 : +91-98745612330 / furniture@gmail.com
+              <Link href='/contactUs' className='hover:text-[#C09578]'>
+                Contact us 24/7
+              </Link>
+              {' : '}{company?.mobile_number || '+91-98745612330'}{' / '}
+              <a
+                href={`mailto:${company?.email || 'furniture@gmail.com'}`}
+                className='hover:text-[#C09578]'
+              >
+                {company?.email || 'furniture@gmail.com'}
+              </a>
             </p>
 
             {
@@ -314,12 +335,48 @@ export default function Header() {
           </div>
         </div>
 
-        <div>
+        <div className="border-b border-gray-300 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((isOpen) => !isOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
+            className="flex w-full items-center justify-between px-5 py-4 text-sm font-bold tracking-wide text-[#242424]"
+          >
+            <span>MENU</span>
+            {mobileMenuOpen ? <FaTimes className="text-lg" /> : <FaBars className="text-lg" />}
+          </button>
+
+          {mobileMenuOpen && (
+            <nav id="mobile-navigation" className="border-t border-gray-200 bg-white px-5 py-3">
+              <ul className="divide-y divide-gray-100">
+                <li><Link href="/" onClick={() => setMobileMenuOpen(false)} className="block py-3 font-semibold text-[#C09578]">HOME</Link></li>
+                <li><Link href="/all-products" onClick={() => setMobileMenuOpen(false)} className="block py-3 font-semibold">ALL PRODUCTS</Link></li>
+                {categories.map((category) => {
+                  const categoryKey = category._id || category.slug || category.name
+                  const isExpanded = mobileCategoryOpen === categoryKey
+                  const childSubCategories = getSubCategoriesByCategory(category)
+                  const menuSubCategories = childSubCategories.length > 0 ? childSubCategories : [category]
+
+                  return <li key={categoryKey} className="py-1"><button type="button" onClick={() => setMobileCategoryOpen(isExpanded ? null : categoryKey)} aria-expanded={isExpanded} className="flex w-full items-center justify-between py-2 text-left font-semibold uppercase"><span>{category.name}</span><FaAngleDown className={`text-xs transition-transform ${isExpanded ? "rotate-180" : ""}`} /></button>{isExpanded && <div className="space-y-3 border-l-2 border-[#c09578] py-3 pl-4">{menuSubCategories.map((subCategory) => { const subSubCategories = childSubCategories.length > 0 ? getSubSubCategoriesBySubCategory(subCategory) : getSubSubCategoriesByCategory(category); return <div key={subCategory._id || subCategory.slug || subCategory.name}><p className="text-sm font-semibold text-[#242424]">{subCategory.name}</p>{subSubCategories.length > 0 && <ul className="mt-2 space-y-2">{subSubCategories.map((subSubCategory) => <li key={subSubCategory._id || subSubCategory.slug || subSubCategory.name}><Link href={buildCategoryUrl(category, subCategory, subSubCategory)} onClick={() => setMobileMenuOpen(false)} className="block text-sm text-gray-600 hover:text-[#C09578]">{subSubCategory.name}</Link></li>)}</ul>}</div>})}</div>}</li>
+                })}
+                <li className="py-1"><button type="button" onClick={() => setMobilePagesOpen((isOpen) => !isOpen)} aria-expanded={mobilePagesOpen} className="flex w-full items-center justify-between py-2 text-left font-semibold"><span>PAGES</span><FaAngleDown className={`text-xs transition-transform ${mobilePagesOpen ? "rotate-180" : ""}`} /></button>{mobilePagesOpen && <ul className="space-y-2 border-l-2 border-[#c09578] py-3 pl-4 text-sm text-gray-600"><li><Link href="/about-us" onClick={() => setMobileMenuOpen(false)}>About Us</Link></li><li><Link href="/cart" onClick={() => setMobileMenuOpen(false)}>Cart</Link></li><li><Link href="/checkout" onClick={() => setMobileMenuOpen(false)}>Checkout</Link></li><li><Link href="/faq" onClick={() => setMobileMenuOpen(false)}>Frequently Questions</Link></li></ul>}</li>
+                <li><Link href="/contactUs" onClick={() => setMobileMenuOpen(false)} className="block py-3 font-semibold">CONTACT US</Link></li>
+              </ul>
+            </nav>
+          )}
+        </div>
+
+        <div className="hidden lg:block">
           <nav>
             <ul className='flex flex-wrap gap-x-5 gap-y-4 justify-center px-4 pt-5 border-b border-gray-400 pb-5 font-semibold sm:gap-8'>
 
               <Link href="/">
                 <li className='text-[#C09578]'>HOME</li>
+              </Link>
+
+              <Link href="/all-products">
+                <li className='hover:text-[#C09578]'>ALL PRODUCTS</li>
               </Link>
 
               {categories.map((category) => {
@@ -339,28 +396,28 @@ export default function Header() {
 
                     <div
                       className="
-                                  absolute left-0 top-full
-                                  w-[900px]
+                                  absolute left-1/2 top-full z-50 w-[min(900px,calc(100vw-2rem))] -translate-x-1/2
+                                  opacity-0 invisible
+                                  group-hover:opacity-100 group-hover:visible
+                                "
+                    >
+                      <div
+                        className="
                                   bg-white
                                   border-t border-gray-200
                                   shadow-lg
                                   mt-0
                                   p-8
-                                  z-50
-                                  opacity-0
-                                  invisible
                                   origin-top
                                   [transform:perspective(1000px)_rotateX(-90deg)]
                                   transition-all
                                   duration-500
                                   ease-out
-                                  group-hover:opacity-100
-                                  group-hover:visible
                                   group-hover:[transform:perspective(1000px)_rotateX(0deg)]
                                 "
-                    >
+                      >
 
-                      <div className="grid grid-cols-3 gap-10">
+                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 sm:gap-10">
 
                         {menuSubCategories.map((subCategory) => {
                           const childSubSubCategories = childSubCategories.length > 0
@@ -368,8 +425,8 @@ export default function Header() {
                             : getSubSubCategoriesByCategory(category);
 
                           return (
-                            <div key={subCategory._id || subCategory.slug || subCategory.name}>
-                              <p className="font-bold text-[#2b2b2b] uppercase">
+                            <div key={subCategory._id || subCategory.slug || subCategory.name} className="min-w-0">
+                              <p className="break-words font-bold text-[#2b2b2b] uppercase">
                                 {subCategory.name}
                               </p>
 
@@ -381,7 +438,7 @@ export default function Header() {
                                     >
                                       <Link
                                         href={buildCategoryUrl(category, subCategory, subSubCategory)}
-                                        className="hover:text-[#C09578]"
+                                        className="block break-words hover:text-[#C09578]"
                                       >
                                         {subSubCategory.name}
                                       </Link>
@@ -399,6 +456,7 @@ export default function Header() {
 
                       </div>
 
+                      </div>
                     </div>
                   </li>
                 );

@@ -98,12 +98,27 @@ exports.updateProfile = async (req, res) => {
   const user = await userModel.findOne({ _id: verifyToken.userData._id, role_type: 'user', deleted_at: null })
   if (!user) return res.status(404).json({ _status: false, _message: 'User not found' })
 
+  const parseAddress = (value) => {
+    if (!value) return null
+    if (typeof value === 'object') return value
+
+    try {
+      return JSON.parse(value)
+    } catch {
+      return null
+    }
+  }
+
   // Update user fields if provided in request body
   if (req.body?.email) user.email = req.body.email
   if (req.body?.name) user.name = req.body.name
   if (req.body?.mobile_number) user.mobile_number = req.body.mobile_number
   if (req.body?.Gender) user.Gender = req.body.Gender
   if (req.body?.Address) user.Address = req.body.Address
+  const billingAddress = parseAddress(req.body?.billing_address)
+  const shippingAddress = parseAddress(req.body?.shipping_address)
+  if (billingAddress) user.billing_address = billingAddress
+  if (shippingAddress) user.shipping_address = shippingAddress
   // Update image if file uploaded
   if (req.file) user.image = req.file.filename
   user.updated_at = new Date()

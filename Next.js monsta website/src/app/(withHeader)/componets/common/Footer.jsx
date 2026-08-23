@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { getAdminApiUrl } from '../../utils/api'
+import { getAdminApiUrl, getWebsiteApiBaseUrl } from '../../utils/api'
 // import { Link } from "react-router-dom";
 import {
   FaFacebookF,
@@ -138,6 +138,7 @@ const getFooterProductsByPath = (products, pathname) => {
 export default function Footer() {
   const pathname = usePathname()
   const [topProducts, setTopProducts] = useState(fallbackTopProducts)
+  const [company, setCompany] = useState(null)
 
   useEffect(() => {
     const fetchFooterProducts = async () => {
@@ -172,6 +173,15 @@ export default function Footer() {
     fetchFooterProducts()
   }, [])
 
+  useEffect(() => {
+    fetch(`${getWebsiteApiBaseUrl()}/company`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data?._status) setCompany(data._data)
+      })
+      .catch(() => {})
+  }, [])
+
   const footerProducts = useMemo(() => {
     return getFooterProductsByPath(topProducts, pathname)
   }, [pathname, topProducts])
@@ -185,15 +195,15 @@ export default function Footer() {
             </h5>
 
             <ul className="space-y-3 text-[15px] leading-6 text-[#4d5560]">
-              <li>Address: Claritas est etiam processus dynamicus</li>
+              <li>Address: {company?.address || 'Claritas est etiam processus dynamicus'}</li>
               <li>
-                <a href="tel:98745612330" className="transition hover:text-[#c98b6b]">
-                  Phone: 98745612330
+                <a href={`tel:${company?.mobile_number || '98745612330'}`} className="transition hover:text-[#c98b6b]">
+                  Phone: {company?.mobile_number || '98745612330'}
                 </a>
               </li>
               <li>
-                <a href="mailto:furniture@gmail.com" className="transition hover:text-[#c98b6b]">
-                  Email: furniture@gmail.com
+                <a href={`mailto:${company?.email || 'furniture@gmail.com'}`} className="transition hover:text-[#c98b6b]">
+                  Email: {company?.email || 'furniture@gmail.com'}
                 </a>
               </li>
             </ul>
@@ -317,6 +327,9 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="border-t border-gray-200 mt-8 py-8 text-center">
+          <p className="mb-2 font-semibold text-[#1f1f1f]">
+            {company?.company_name || 'Furniture'}
+          </p>
           <p className="text-[16px] text-[#4d5560]">
             All Rights Reserved By Furniture | © 2026
           </p>

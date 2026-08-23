@@ -7,6 +7,18 @@ body {
     overflow-x: hidden;
 }
 
+:root { --monsta-ink: #25221f; --monsta-accent: #b87958; --monsta-line: #e9e4df; }
+html { scroll-behavior: smooth; }
+body { color: var(--monsta-ink); background: #fff; font-family: Arial, Helvetica, sans-serif; line-height: 1.55; }
+button, a, input, select, textarea { transition: color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--monsta-accent); outline-offset: 3px; }
+::selection { background: #ead1c2; color: var(--monsta-ink); }
+.product-card { border: 1px solid var(--monsta-line); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 18px rgba(45,35,28,.06); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.product-card:hover { transform: translateY(-5px); border-color: #d8c4b6; box-shadow: 0 16px 35px rgba(45,35,28,.13); }
+.product-card__image { transition: transform .45s ease; }
+.product-card:hover .product-card__image { transform: scale(1.045); }
+.section-heading { letter-spacing: -.025em; }
+
 .scrollbar::-webkit-scrollbar{
     width: 7px;
 }

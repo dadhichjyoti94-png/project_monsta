@@ -228,14 +228,15 @@ export default function ProductCart({
   
   return (
 
-    <div className="bg-white shadow-[0_0_14px_rgba(0,0,0,0.14)]">
+    <div className="product-card bg-white">
 
       {/* PRODUCT IMAGE */}
 
+      <div className="overflow-hidden bg-[#faf8f5]">
       <img
         src={productImage}
         alt={title || 'Product'}
-        className="w-full h-[210px] object-cover bg-white"
+        className="product-card__image w-full h-[230px] object-cover"
         onError={(e) => {
 
           if (
@@ -246,15 +247,16 @@ export default function ProductCart({
 
         }}
       />
+      </div>
 
 
       {/* PRODUCT DETAILS */}
 
-      <div className="text-center px-4 py-4">
+      <div className="text-center px-4 py-5">
 
         {/* CATEGORY */}
 
-        <p className="mb-4 text-[15px] text-gray-700">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[.12em] text-[#887f77]">
           {category}
         </p>
 
@@ -262,25 +264,25 @@ export default function ProductCart({
 
         <Link href={`/product-details/${productId}`}>
 
-          <h3 className="mb-4 min-h-[28px] text-[18px] font-serif font-bold leading-snug cursor-pointer hover:text-[#c98b6b]">
+          <h3 className="mb-4 min-h-[52px] text-[17px] font-serif font-bold leading-snug cursor-pointer hover:text-[#b87958]">
             {title}
           </h3>
 
         </Link>
 
 
-        <div className="mb-4 border-b border-gray-200"></div>
+        <div className="mb-4 border-b border-[#eee8e3]"></div>
 
 
         {/* PRICE */}
 
         <div className="mb-4">
 
-          <span className="mr-2 text-[16px] text-gray-700 line-through">
+          <span className="mr-2 text-sm text-gray-500 line-through">
             Rs. {finalOldPrice.toLocaleString()}
           </span>
 
-          <span className="text-[18px] font-bold text-[#c98b6b]">
+          <span className="text-[18px] font-bold text-[#b87958]">
             Rs. {finalNewPrice.toLocaleString()}
           </span>
 
@@ -296,7 +298,7 @@ export default function ProductCart({
           <button
             type="button"
             onClick={addToWishlist}
-            className="flex h-[44px] w-[44px] items-center justify-center bg-gray-100 hover:bg-[#c98b6b] hover:text-white transition"
+            className="flex h-[44px] w-[44px] items-center justify-center rounded-md border border-[#e9e4df] bg-[#faf8f5] hover:border-[#b87958] hover:bg-[#b87958] hover:text-white"
           >
 
             {isWishlist ? (
@@ -313,7 +315,7 @@ export default function ProductCart({
           <button
             type="button"
             onClick={addToCart}
-            className="h-[44px] bg-gray-100 px-6 text-[15px] hover:bg-[#c98b6b] hover:text-white transition"
+            className="h-[44px] rounded-md bg-[#25221f] px-6 text-[14px] font-semibold text-white hover:bg-[#b87958]"
           >
             Add To Cart
           </button>

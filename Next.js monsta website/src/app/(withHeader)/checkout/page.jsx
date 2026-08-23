@@ -18,6 +18,16 @@ export default function Checkout() {
   const [cartItems, setCartItems] = useState([])
   const [showShipping, setShowShipping] = useState(false)
   const [subtotal, setSubtotal] = useState(0)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    if (!Cookies.get('user_login')) {
+      router.replace('/login-register')
+      return
+    }
+
+    setIsAuthenticated(true)
+  }, [router])
 
   useEffect(() => {
     const oldCart = JSON.parse(localStorage.getItem('cart')) || []
@@ -252,6 +262,8 @@ export default function Checkout() {
   const labelClass = 'font-semibold text-[14px] text-[#242424]'
   const headingClass = 'bg-[#1f1f1f] text-white px-5 py-4 font-bold uppercase tracking-wide'
 
+  if (!isAuthenticated) return null
+
   return (
     <div className="w-[84%] mx-auto py-10">
       <form onSubmit={placeOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -301,6 +313,7 @@ export default function Checkout() {
                     name="billing_email"
                     className={inputClass}
                     type="email"
+                    required
                   />
                 </div>
 
