@@ -80,6 +80,13 @@ export default function Checkout() {
   //place Order
   const placeOrder = (event) => {
     event.preventDefault()
+    const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+
+    if (!razorpayKey) {
+      toast.error('Payment service is not configured. Please try again later.')
+      return
+    }
+
     console.log("Cart Items:", cartItems);
 
     console.log("Request Body:", {
@@ -186,7 +193,7 @@ export default function Checkout() {
       console.log("Mobile:", orderInfo.mobile_number);
       console.log("User Mobile:", userProfile.mobile_number);
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: razorpayKey,
         amount: orderInfo.net_amount * 100, // Amount in paise
         currency: "INR",
         name: "wscube tech",
