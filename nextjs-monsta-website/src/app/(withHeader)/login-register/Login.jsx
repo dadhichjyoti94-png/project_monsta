@@ -156,7 +156,7 @@ export default function Login() {
                                                 Email <span className="text-red-500">*</span>
                                             </label>
                                             <input
-                                                type="email" name='email' defaultValue="dadhichjyoti94@gmail.com"
+                                                type="email" name='email'
                                                 className="w-full bg-slate-100 border' border-gray-200 px-4 py-3 outline-none"
                                                 placeholder="Enter the Email"
                                             />
@@ -167,7 +167,7 @@ export default function Login() {
                                                 Password <span className="text-red-500">*</span>
                                             </label>
                                             <input
-                                                type="password" name='password' defaultValue="12345"
+                                                type="password" name='password'
                                                 className="w-full bg-slate-100 border border-gray-200 px-4 py-3 outline-none"
                                                 placeholder="Enter the Password"
                                             />

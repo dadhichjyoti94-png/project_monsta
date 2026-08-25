@@ -193,9 +193,9 @@ export default function Cart() {
                 </div>
 
                 <div className='text-right'>
-                  <button className='bg-[#c09578] text-white px-6 py-4 font-bold'>
+                  <Link href='/checkout' className='inline-block bg-[#c09578] text-white px-6 py-4 font-bold'>
                     Proceed To Checkout
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
