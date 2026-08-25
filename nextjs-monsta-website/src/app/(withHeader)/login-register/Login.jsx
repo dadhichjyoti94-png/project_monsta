@@ -7,7 +7,6 @@ import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import Link from 'next/link'
-import Cookies from 'js-cookie'
 import { getWebsiteApiBaseUrl } from '../utils/api'
 
 
@@ -46,9 +45,6 @@ export default function Login() {
                 const token = result.data?._token
 
                 if (result.data._status === true && token) {
-                    // Keep the session available across browser restarts. The
-                    // token itself is still sent only in the Authorization header.
-                    Cookies.set('user_login', token, { expires: 7, sameSite: 'lax' })
                     dispatch(login(token));
                     toast.success('Login successfully')  
                     router.push('/my-dashbord')
